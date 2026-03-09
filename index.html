@@ -1253,13 +1253,15 @@ let contratosTab = 'activos'; // 'activos' | 'finalizados'
 // ═══════════════════════════════════════════════
 //  ROLE HELPERS
 // ═══════════════════════════════════════════════
-function canEdit()  { return currentRole === 'admin' || currentRole === 'editor'; }
+function canEdit()         { return currentRole === 'admin' || currentRole === 'editor'; }
+function canEditViaticos() { return currentRole === 'admin' || currentRole === 'editor' || currentRole === 'viaticos'; }
 function isAdmin()  { return currentRole === 'admin'; }
 function roleBadgeHTML(role) {
   const map = {
-    admin:  { bg:'#fef3c7', color:'#92400e', label:'👑 Admin' },
-    editor: { bg:'#dbeafe', color:'#1e40af', label:'✏️ Editor' },
-    lector: { bg:'#f1f5f9', color:'#475569', label:'👁 Lector' },
+    admin:    { bg:'#fef3c7', color:'#92400e', label:'👑 Admin' },
+    editor:   { bg:'#dbeafe', color:'#1e40af', label:'✏️ Editor' },
+    lector:   { bg:'#f1f5f9', color:'#475569', label:'👁 Lector' },
+    viaticos: { bg:'#dcfce7', color:'#166534', label:'🧾 Viáticos' },
   };
   const r = map[role] || map.lector;
   return `<span style="background:${r.bg};color:${r.color};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${r.label}</span>`;
@@ -1312,7 +1314,7 @@ function showView(v) {
   const actions = document.getElementById('topbar-actions');
   if (v === 'contratos' && canEdit()) actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModalContrato()">＋ Nuevo contrato</button>`;
   else if (v === 'personal' && canEdit()) actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModalPersonal()">＋ Nuevo registro</button>`;
-  else if (v === 'viaticos' && canEdit()) actions.innerHTML = '<button class="btn btn-ghost btn-sm" onclick="openModalTopes()">⚙️ Topes</button> <button class="btn btn-primary btn-sm" onclick="openModalViatico()">＋ Nuevo viático</button>';
+  else if (v === 'viaticos' && canEditViaticos()) actions.innerHTML = '<button class="btn btn-ghost btn-sm" onclick="openModalTopes()">⚙️ Topes</button> <button class="btn btn-primary btn-sm" onclick="openModalViatico()">＋ Nuevo viático</button>';
   else actions.innerHTML = '';
   if (v === 'usuarios') renderUsuarios();
   if (v === 'viaticos') subscribeViaticos();
@@ -1997,9 +1999,10 @@ async function renderUsuarios() {
   if (!users.length) { container.innerHTML = emptyHTML('👤','Sin usuarios','Aún no hay usuarios registrados.'); return; }
 
   const roleColors = {
-    admin:  {bg:'#fef3c7',color:'#92400e'},
-    editor: {bg:'#dbeafe',color:'#1e40af'},
-    lector: {bg:'#f1f5f9',color:'#475569'},
+    admin:    {bg:'#fef3c7',color:'#92400e'},
+    editor:   {bg:'#dbeafe',color:'#1e40ad'},
+    lector:   {bg:'#f1f5f9',color:'#475569'},
+    viaticos: {bg:'#dcfce7',color:'#166534'},
   };
 
   container.innerHTML = `
@@ -2024,15 +2027,16 @@ async function renderUsuarios() {
             <td style="padding:12px 18px;font-size:13px;color:var(--ink3)">${u.email||'—'}</td>
             <td style="padding:12px 18px;text-align:center">
               <span style="background:${rc.bg};color:${rc.color};padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">
-                ${u.role==='admin'?'👑 Admin':u.role==='editor'?'✏️ Editor':'👁 Lector'}
+                ${u.role==='admin'?'👑 Admin':u.role==='editor'?'✏️ Editor':u.role==='viaticos'?'🧾 Viáticos':'👁 Lector'}
               </span>
             </td>
             <td style="padding:12px 18px;text-align:center">
               ${isMe ? '<span style="font-size:12px;color:var(--muted)">Tu propio rol</span>' : `
               <select onchange="changeRole('${u.id}',this.value)" style="border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--ink);background:white;cursor:pointer">
-                <option value="admin"  ${u.role==='admin' ?'selected':''}>👑 Admin</option>
-                <option value="editor" ${u.role==='editor'?'selected':''}>✏️ Editor</option>
-                <option value="lector" ${u.role==='lector'?'selected':''}>👁 Lector</option>
+                <option value="admin"    ${u.role==='admin'   ?'selected':''}>👑 Admin</option>
+                <option value="editor"   ${u.role==='editor'  ?'selected':''}>✏️ Editor</option>
+                <option value="viaticos" ${u.role==='viaticos'?'selected':''}>🧾 Viáticos</option>
+                <option value="lector"   ${u.role==='lector'  ?'selected':''}>👁 Lector</option>
               </select>`}
             </td>
           </tr>`;
@@ -2185,7 +2189,7 @@ function renderViatRegistros() {
     const pill = v.estado==='pagado' ? '<span class="vpill vpill-pagado">✅ Pagado</span>'
       : v.estado==='revision' ? '<span class="vpill vpill-revision">🔍 En revisión</span>'
       : '<span class="vpill vpill-pendiente">⏳ Sin pasar</span>';
-    const edBtn = canEdit()
+    const edBtn = canEditViaticos()
       ? '<button class="btn btn-xs btn-ghost" onclick="openModalViatico(\'' + v.id + '\')">✏️</button> '
         +'<button class="btn btn-xs btn-danger" onclick="deleteViatico(\'' + v.id + '\')">🗑</button>'
       : '—';
@@ -2211,7 +2215,7 @@ function renderViatRegistros() {
 }
 
 function openModalViatico(id) {
-  if (!canEdit()) { alert('No tienes permiso para editar.'); return; }
+  if (!canEditViaticos()) { alert('No tienes permiso para editar.'); return; }
   const selT = document.getElementById('v-trabajador');
   const nombres = [...new Set(personal.map(p=>p.nombre).filter(Boolean))].sort();
   selT.innerHTML = '<option value="">Seleccione...</option>'
@@ -2376,13 +2380,13 @@ async function saveViatico() {
   }
 }
 async function deleteViatico(id) {
-  if(!canEdit()){alert('No tienes permiso.');return;}
+  if(!canEditViaticos()){alert('No tienes permiso.');return;}
   if(!confirm('¿Eliminar este registro de viático?'))return;
   await db.collection('viaticos').doc(id).delete();
 }
 
 function openModalTopes() {
-  if(!canEdit()){alert('Solo editores/admin pueden cambiar los topes.');return;}
+  if(!canEditViaticos()){alert('Solo editores/admin pueden cambiar los topes.');return;}
   setVal('tp-ant-sin', topes.ant_sin||''); setVal('tp-ant-con', topes.ant_con||'');
   setVal('tp-fue-sin', topes.fue_sin||''); setVal('tp-fue-con', topes.fue_con||'');
   openOv('ov-topes');
