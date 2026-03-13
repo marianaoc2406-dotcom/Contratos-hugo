@@ -1341,7 +1341,7 @@ body {
         </div>
         <div class="fg">
           <label>Fecha Salida *</label>
-          <input type="date" id="s-fsalida">
+          <input type="date" id="s-fsalida" oninput="calcDiasSalida()">
         </div>
         <div class="fg">
           <label>Fecha Regreso</label>
@@ -2698,7 +2698,7 @@ function subscribeSalidas() {
   unsubSalidas = db.collection('salidas')
     .onSnapshot(snap => {
       salidas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      salidas.sort((a,b) => (b.fechaSalida||'').localeCompare(a.fechaSalida||''));
+      salidas.sort((a,b) => (a.fechaSalida||'').localeCompare(b.fechaSalida||''));
       renderSalidas();
     }, err => console.error('salidas err:', err));
 }
@@ -2721,6 +2721,11 @@ function calcDiasSalida() {
     document.getElementById('s-dias').value = diff >= 0 ? diff + 1 : '';
   } else {
     document.getElementById('s-dias').value = '';
+  }
+  // Auto-llenar semana basado en fecha de salida
+  if (fs) {
+    const semEl = document.getElementById('s-semana');
+    if (semEl) semEl.value = semanaLabel(fs);
   }
 }
 
@@ -2759,7 +2764,7 @@ function renderSalidas() {
       if (!h.includes(q)) return false;
     }
     return true;
-  });
+  }).sort((a,b) => (a.fechaSalida||'').localeCompare(b.fechaSalida||''));
 
   if (!filtered.length) {
     tbody.innerHTML = '';
