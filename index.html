@@ -686,6 +686,50 @@ body {
 .tope-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--blue); margin-bottom:3px; }
 .tope-val { font-family:'Fraunces',serif; font-size:17px; font-weight:700; color:var(--ink); }
 .viat-tab-bar { display:flex; gap:2px; background:#f1f5f9; border-radius:var(--r8); padding:3px; margin-bottom:20px; width:fit-content; }
+
+/* ── SOPORTE IMAGEN ── */
+.viat-img-thumb {
+  width: 40px; height: 40px; object-fit: cover;
+  border-radius: 6px; border: 1.5px solid var(--border);
+  cursor: pointer; transition: transform .15s, box-shadow .15s;
+  display: block;
+}
+.viat-img-thumb:hover { transform: scale(1.08); box-shadow: var(--shadow); }
+.viat-img-upload-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border: 1.5px dashed var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 18px; color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s;
+  background: white;
+}
+.viat-img-upload-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.img-lightbox-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(13,17,23,.85); z-index: 9999;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.img-lightbox-overlay.open { display: flex; }
+.img-lightbox-inner {
+  position: relative; max-width: 90vw; max-height: 90vh;
+}
+.img-lightbox-inner img {
+  max-width: 90vw; max-height: 85vh;
+  border-radius: 12px; box-shadow: var(--shadow-xl);
+  object-fit: contain; display: block;
+}
+.img-lightbox-close {
+  position: absolute; top: -14px; right: -14px;
+  background: white; border: none; border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+}
+.img-lightbox-label {
+  text-align: center; color: rgba(255,255,255,.7);
+  font-size: 12px; margin-top: 10px; font-weight: 500;
+}
 </style>
 </head>
 <body>
@@ -744,6 +788,9 @@ body {
     </button>
     <button class="sb-btn" id="sb-viaticos" onclick="showView('viaticos')">
       <span class="ic">🧾</span> Viáticos
+    </button>
+    <button class="sb-btn" id="sb-salidas" onclick="showView('salidas')">
+      <span class="ic">🚗</span> Salidas
     </button>
     <div class="sb-section" id="sb-section-admin" style="display:none">Admin</div>
     <button class="sb-btn" id="sb-usuarios" onclick="showView('usuarios')" style="display:none">
@@ -879,7 +926,7 @@ body {
                   <th>N°</th><th>Fecha</th><th>Trabajador</th><th>Municipio</th>
                   <th>¿Pernoctó?</th><th>Tipo Gasto</th><th>Concepto</th>
                   <th>Soporte</th><th>¿EDESO?</th><th>Valor</th>
-                  <th>Gastado/día</th><th>Tope/día</th><th>Estado</th><th>Acciones</th>
+                  <th>Gastado/día</th><th>Tope/día</th><th>Estado</th><th>📎 Soporte</th><th>Acciones</th>
                 </tr></thead>
                 <tbody id="viat-tbody"></tbody>
               </table>
@@ -891,6 +938,61 @@ body {
           </div>
         </div>
       </div>
+
+      <!-- ── SALIDAS ── -->
+      <div class="view" id="view-salidas">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🚗 Control de Salidas</div>
+            <div class="page-sub">Registro semanal de salidas de campo por responsable</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="viat-filters">
+            <div class="search" style="max-width:260px">
+              <span class="search-ic">🔍</span>
+              <input type="text" id="sal-search" placeholder="Buscar responsable, municipio..." oninput="renderSalidas()">
+            </div>
+            <select class="viat-filter-select" id="sal-filter-estado" onchange="renderSalidas()">
+              <option value="">Todos los estados</option>
+              <option value="Programada">📅 Programada</option>
+              <option value="En curso">🚗 En curso</option>
+              <option value="Finalizada">✅ Finalizada</option>
+              <option value="Cancelada">❌ Cancelada</option>
+            </select>
+            <select class="viat-filter-select" id="sal-filter-resp" onchange="renderSalidas()">
+              <option value="">Todos los responsables</option>
+            </select>
+            <select class="viat-filter-select" id="sal-filter-semana" onchange="renderSalidas()">
+              <option value="">Todas las semanas</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="vt-table" id="sal-table">
+              <thead><tr>
+                <th>#</th>
+                <th>Semana</th>
+                <th>Responsable</th>
+                <th>Fecha Salida</th>
+                <th>Fecha Regreso</th>
+                <th># Días</th>
+                <th>Acompañantes</th>
+                <th>Total Asist.</th>
+                <th>Municipios</th>
+                <th>Proyectos/Estaciones</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr></thead>
+              <tbody id="sal-tbody"></tbody>
+            </table>
+          </div>
+          <div id="sal-empty" class="empty" style="display:none;padding:40px 20px">
+            <div class="empty-icon">🚗</div><h3>Sin salidas registradas</h3>
+            <p>Usa ＋ Nueva salida para comenzar.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1158,6 +1260,20 @@ body {
         </table>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="addViatItem()" style="width:100%;justify-content:center;border-style:dashed">＋ Agregar gasto</button>
+
+      <!-- PDF soporte del día -->
+      <div style="margin-top:16px;background:var(--surface);border:1.5px dashed var(--border);border-radius:var(--r12);padding:14px 16px">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink3);margin-bottom:10px">📎 Soporte del día (PDF o imagen)</div>
+        <div id="v-soporte-preview" style="display:none;margin-bottom:10px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label id="v-soporte-label" style="display:inline-flex;align-items:center;gap:7px;background:white;border:1.5px solid var(--border);border-radius:var(--r8);padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2);transition:border-color .15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+            📂 Adjuntar soporte
+            <input type="file" id="v-soporte-input" accept="image/*,application/pdf" style="display:none" onchange="onSoporteFileChange(event)">
+          </label>
+          <button id="v-soporte-remove" onclick="removeSoporteDia()" style="display:none;background:none;border:none;color:var(--red);cursor:pointer;font-size:12.5px;font-weight:600">✕ Quitar</button>
+          <span id="v-soporte-name" style="font-size:12px;color:var(--muted)">Sin archivo adjunto</span>
+        </div>
+      </div>
       <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1.5px solid var(--border2)">
         <span style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px">Total del día</span>
         <span id="v-total-dia" style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink)">$0</span>
@@ -1197,8 +1313,81 @@ body {
   </div>
 </div>
 
-<!-- ══ DRAWER ══ -->
-<div class="drawer-overlay" id="drawer-ov" onclick="closeDrawer(event)">
+<!-- ══ MODAL: SALIDA ══ -->
+<div class="overlay" id="ov-salida">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="ms-title">Nueva Salida</div>
+        <div class="modal-sub">Registra la salida semanal de campo</div>
+      </div>
+      <button class="modal-close" onclick="closeOv('ov-salida')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-divider">Identificación de semana</div>
+        <div class="fg">
+          <label>Semana (ej: Semana 1 - Ene 2025) *</label>
+          <input type="text" id="s-semana" placeholder="Ej: Semana 12 · Mar 2025">
+        </div>
+        <div class="fg">
+          <label>Estado</label>
+          <input type="text" id="s-estado" placeholder="Ej: Programada, En campo, Finalizada...">
+        </div>
+        <div class="form-divider">Fechas y responsable</div>
+        <div class="fg">
+          <label>Responsable *</label>
+          <select id="s-responsable"><option value="">Seleccione...</option></select>
+        </div>
+        <div class="fg">
+          <label>Fecha Salida *</label>
+          <input type="date" id="s-fsalida">
+        </div>
+        <div class="fg">
+          <label>Fecha Regreso</label>
+          <input type="date" id="s-fregreso" oninput="calcDiasSalida()">
+        </div>
+        <div class="fg">
+          <label># Días</label>
+          <input type="number" id="s-dias" placeholder="Auto" min="0" readonly style="background:var(--surface);color:var(--ink3)">
+        </div>
+        <div class="form-divider">Asistentes</div>
+        <div class="fg full">
+          <label>Acompañantes (nombres separados por coma)</label>
+          <input type="text" id="s-acompanantes" placeholder="Ej: Juan Pérez, María López">
+        </div>
+        <div class="fg">
+          <label>Total Asistentes</label>
+          <input type="number" id="s-total-asist" placeholder="0" min="1">
+        </div>
+        <div class="form-divider">Destino y trabajo</div>
+        <div class="fg full">
+          <label>Municipios a visitar *</label>
+          <input type="text" id="s-municipios" placeholder="Ej: Medellín, Bello, Copacabana">
+        </div>
+        <div class="fg full">
+          <label>Proyectos / Estaciones</label>
+          <textarea id="s-proyectos" style="min-height:60px" placeholder="Describe los proyectos o estaciones a visitar..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeOv('ov-salida')">Cancelar</button>
+      <button class="btn btn-primary" id="sal-save-btn" onclick="saveSalida()">Guardar salida</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LIGHTBOX IMAGEN ══ -->
+<div class="img-lightbox-overlay" id="img-lightbox" onclick="closeLightbox(event)">
+  <div class="img-lightbox-inner">
+    <button class="img-lightbox-close" onclick="document.getElementById('img-lightbox').classList.remove('open')">✕</button>
+    <img id="img-lightbox-src" src="" alt="Soporte">
+    <div class="img-lightbox-label" id="img-lightbox-label"></div>
+  </div>
+</div>
+
+
   <div class="drawer" id="drawer-panel"></div>
 </div>
 
@@ -1309,15 +1498,17 @@ function showView(v) {
   document.querySelectorAll('.sb-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-'+v)?.classList.add('active');
   document.getElementById('sb-'+v)?.classList.add('active');
-  const titles = { dashboard:'Dashboard', contratos:'Contratos', personal:'Personal & Contratistas', usuarios:'Gestión de Usuarios', viaticos:'Control de Viáticos' };
+  const titles = { dashboard:'Dashboard', contratos:'Contratos', personal:'Personal & Contratistas', usuarios:'Gestión de Usuarios', viaticos:'Control de Viáticos', salidas:'Control de Salidas' };
   setText('topbar-title', titles[v]||v);
   const actions = document.getElementById('topbar-actions');
   if (v === 'contratos' && canEdit()) actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModalContrato()">＋ Nuevo contrato</button>`;
   else if (v === 'personal' && canEdit()) actions.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModalPersonal()">＋ Nuevo registro</button>`;
   else if (v === 'viaticos' && canEditViaticos()) actions.innerHTML = '<button class="btn btn-ghost btn-sm" onclick="openModalTopes()">⚙️ Topes</button> <button class="btn btn-primary btn-sm" onclick="openModalViatico()">＋ Nuevo viático</button>';
+  else if (v === 'salidas') actions.innerHTML = '<button class="btn btn-primary btn-sm" onclick="openModalSalida()">＋ Nueva salida</button>';
   else actions.innerHTML = '';
   if (v === 'usuarios') renderUsuarios();
   if (v === 'viaticos') subscribeViaticos();
+  if (v === 'salidas') subscribeSalidas();
 }
 
 function switchTab(tab) {
@@ -2173,7 +2364,7 @@ function renderViatRegistros() {
     if (zona && v.zona!==zona) return false;
     if (q) { const h=(v.trabajador+' '+v.municipio+' '+v.concepto+' '+v.tipoGasto).toLowerCase(); if(!h.includes(q)) return false; }
     return true;
-  }).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  }).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));  // más reciente primero
   if (!filtered.length) { tbody.innerHTML=''; if(emptyEl) emptyEl.style.display=''; return; }
   if (emptyEl) emptyEl.style.display='none';
   const fmtV = n => n ? '$'+Number(n).toLocaleString('es-CO') : '—';
@@ -2193,6 +2384,11 @@ function renderViatRegistros() {
       ? '<button class="btn btn-xs btn-ghost" onclick="openModalViatico(\'' + v.id + '\')">✏️</button> '
         +'<button class="btn btn-xs btn-danger" onclick="deleteViatico(\'' + v.id + '\')">🗑</button>'
       : '—';
+    const imgCell = v.soporteBase64
+      ? (v.soporteBase64.startsWith('data:application/pdf')
+          ? '<button onclick="window.open(viaticos.find(x=>x.id===\''+v.id+'\')?.soporteBase64,\'_blank\')" style="background:var(--yellow-lt);border:1.5px solid #fde68a;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11.5px;font-weight:600;color:#92400e">📄 PDF</button>'
+          : '<img class="viat-img-thumb" src="'+v.soporteBase64+'" onclick="openLightbox(\''+encodeURIComponent(v.soporteBase64)+'\',\'Soporte del día\')" title="Ver soporte">')
+      : '<span style="color:var(--border);font-size:13px">—</span>';
     return '<tr>'
       +'<td style="font-weight:700;color:var(--muted)">'+(num++)+'</td>'
       +'<td>'+fmtF(v.fecha)+'</td>'
@@ -2209,6 +2405,7 @@ function renderViatRegistros() {
         +(exc?'<br><span class="vpill vpill-excedido">⚠️ Excede tope</span>':'')+'</td>'
       +'<td style="font-size:12px;color:var(--muted)">'+fmtV(tm)+'</td>'
       +'<td>'+pill+'</td>'
+      +'<td style="text-align:center">'+imgCell+'</td>'
       +'<td style="text-align:center;white-space:nowrap">'+edBtn+'</td>'
       +'</tr>';
   }).join('');
@@ -2226,23 +2423,31 @@ function openModalViatico(id) {
   document.getElementById('v-pernocto').value = 'no';
   document.getElementById('v-estado').value = 'pendiente';
   document.getElementById('v-tope-bar').style.display = 'none';
+  // reset soporte
+  viatSoporteBase64 = '';
+  const inp = document.getElementById('v-soporte-input');
+  if (inp) inp.value = '';
   if (id) {
-    const v = viaticos.find(x=>x.id===id);
-    if (v) {
-      selT.value = v.trabajador||'';
-      document.getElementById('v-fecha').value = v.fecha||'';
-      document.getElementById('v-municipio').value = v.municipio||'';
-      document.getElementById('v-zona').value = v.zona||'antioquia';
-      document.getElementById('v-pernocto').value = v.pernocto||'no';
-      document.getElementById('v-estado').value = v.estado||'pendiente';
-      viatItems = [{ id: v.id, tipoGasto: v.tipoGasto||'', concepto: v.concepto||'',
-        tipoSoporte: v.tipoSoporte||'', numFactura: v.numFactura||'', edeso: v.edeso||'si', valor: v.valor||0 }];
+    // editar: buscar todos los registros del mismo trabajador+fecha para cargar múltiples gastos
+    const ref = viaticos.find(x=>x.id===id);
+    if (ref) {
+      selT.value = ref.trabajador||'';
+      document.getElementById('v-fecha').value = ref.fecha||'';
+      document.getElementById('v-municipio').value = ref.municipio||'';
+      document.getElementById('v-zona').value = ref.zona||'antioquia';
+      document.getElementById('v-pernocto').value = ref.pernocto||'no';
+      document.getElementById('v-estado').value = ref.estado||'pendiente';
+      // Cargar soporte del día (se guarda en el primer registro del día)
+      viatSoporteBase64 = ref.soporteBase64||'';
+      viatItems = [{ id: ref.id, tipoGasto: ref.tipoGasto||'', concepto: ref.concepto||'',
+        tipoSoporte: ref.tipoSoporte||'', numFactura: ref.numFactura||'', edeso: ref.edeso||'si', valor: ref.valor||0 }];
       document.getElementById('mv-title').textContent = 'Editar Viático';
     }
   } else {
     viatItems = [blankItem()];
     document.getElementById('mv-title').textContent = 'Nuevo Registro de Viático';
   }
+  updateSoportePreview();
   renderViatItemRows();
   updateTopeDisplay();
   openOv('ov-viatico');
@@ -2279,40 +2484,110 @@ function readItemFromDOM(idx) {
   viatItems[idx].numFactura  = row.querySelector('.vi-ndoc').value;
   viatItems[idx].edeso       = row.querySelector('.vi-edeso').value;
   viatItems[idx].valor       = parseFloat(row.querySelector('.vi-valor').value)||0;
+  // image is stored directly in viatItems[idx].imagenBase64 via setItemImage()
 }
 
 function onItemChange(idx) { readItemFromDOM(idx); updateTopeDisplay(); }
 
+function openLightbox(encodedSrc, label) {
+  const src = decodeURIComponent(encodedSrc);
+  const lb = document.getElementById('img-lightbox');
+  const imgEl = document.getElementById('img-lightbox-src');
+  const lblEl = document.getElementById('img-lightbox-label');
+  // Si es PDF, abrir en nueva pestaña
+  if (src.startsWith('data:application/pdf')) {
+    window.open(src, '_blank'); return;
+  }
+  imgEl.src = src;
+  if (lblEl) lblEl.textContent = label || '';
+  lb.classList.add('open');
+}
+
+function closeLightbox(e) {
+  if (e.target === document.getElementById('img-lightbox')) {
+    document.getElementById('img-lightbox').classList.remove('open');
+  }
+}
+
+
+// current day-level PDF soporte state
+let viatSoporteBase64 = '';
+
+function onSoporteFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const MAX_SIZE = 8 * 1024 * 1024;
+  if (file.size > MAX_SIZE) { alert('El archivo supera 8 MB. Comprime el PDF o usa una imagen.'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    viatSoporteBase64 = ev.target.result;
+    updateSoportePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateSoportePreview() {
+  const preview = document.getElementById('v-soporte-preview');
+  const nameEl  = document.getElementById('v-soporte-name');
+  const removeBtn = document.getElementById('v-soporte-remove');
+  if (!preview) return;
+  if (viatSoporteBase64) {
+    removeBtn.style.display = '';
+    const isPDF = viatSoporteBase64.startsWith('data:application/pdf');
+    if (isPDF) {
+      preview.style.display = '';
+      preview.innerHTML = '<div style="display:inline-flex;align-items:center;gap:8px;background:#fef3c7;border:1.5px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#92400e;cursor:pointer" onclick="window.open(viatSoporteBase64,\'_blank\')">📄 PDF adjunto — clic para ver</div>';
+    } else {
+      preview.style.display = '';
+      preview.innerHTML = '<img src="'+viatSoporteBase64+'" style="max-height:100px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer" onclick="openLightbox(encodeURIComponent(viatSoporteBase64),\'Soporte del día\')">';
+    }
+    if (nameEl) nameEl.textContent = 'Archivo adjunto ✓';
+  } else {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+    if (nameEl) nameEl.textContent = 'Sin archivo adjunto';
+    if (removeBtn) removeBtn.style.display = 'none';
+  }
+}
+
+function removeSoporteDia() {
+  viatSoporteBase64 = '';
+  const input = document.getElementById('v-soporte-input');
+  if (input) input.value = '';
+  updateSoportePreview();
+}
+
 function renderViatItemRows() {
   const tbody = document.getElementById('v-items-tbody');
   if (!tbody) return;
-  tbody.innerHTML = viatItems.map((item, idx) => '<tr class="viat-item-row" data-idx="'+idx+'" style="border-bottom:1px solid var(--border2)">'
-    +'<td style="padding:7px 8px;min-width:130px"><select class="vi-tipo" onchange="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;background:white">'
-    +'<option value="">Tipo…</option>'
-    +'<option value="Alimentación"'+(item.tipoGasto==='Alimentación'?' selected':'')+'>Alimentación</option>'
-    +'<option value="Transporte"'+(item.tipoGasto==='Transporte'?' selected':'')+'>Transporte</option>'
-    +'<option value="Hospedaje"'+(item.tipoGasto==='Hospedaje'?' selected':'')+'>Hospedaje</option>'
-    +'<option value="Combustible"'+(item.tipoGasto==='Combustible'?' selected':'')+'>Combustible</option>'
-    +'<option value="Peaje"'+(item.tipoGasto==='Peaje'?' selected':'')+'>Peaje</option>'
-    +'<option value="Otro"'+(item.tipoGasto==='Otro'?' selected':'')+'>Otro</option>'
-    +'</select></td>'
-    +'<td style="padding:7px 8px;min-width:160px"><input class="vi-concepto" type="text" value="'+(item.concepto||'')+'" placeholder="Descripción del gasto" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit"></td>'
-    +'<td style="padding:7px 8px;min-width:110px"><select class="vi-soporte" onchange="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;background:white">'
-    +'<option value="">—</option>'
-    +'<option value="Factura"'+(item.tipoSoporte==='Factura'?' selected':'')+'>Factura</option>'
-    +'<option value="Recibo"'+(item.tipoSoporte==='Recibo'?' selected':'')+'>Recibo</option>'
-    +'<option value="Ticket"'+(item.tipoSoporte==='Ticket'?' selected':'')+'>Ticket</option>'
-    +'<option value="Otro"'+(item.tipoSoporte==='Otro'?' selected':'')+'>Otro</option>'
-    +'</select></td>'
-    +'<td style="padding:7px 8px;min-width:90px"><input class="vi-ndoc" type="text" value="'+(item.numFactura||'')+'" placeholder="FE-0001" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit"></td>'
-    +'<td style="padding:7px 8px;text-align:center;min-width:64px"><select class="vi-edeso" onchange="onItemChange('+idx+')" style="border:1.5px solid var(--border);border-radius:6px;padding:6px;font-size:12.5px;font-family:inherit;background:white">'
-    +'<option value="si"'+(item.edeso!=='no'?' selected':'')+'>✅</option>'
-    +'<option value="no"'+(item.edeso==='no'?' selected':'')+'>❌</option>'
-    +'</select></td>'
-    +'<td style="padding:7px 8px;min-width:100px;text-align:right"><input class="vi-valor" type="number" value="'+(item.valor||'')+'" placeholder="0" min="0" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;text-align:right;font-weight:600"></td>'
-    +'<td style="padding:7px 6px;text-align:center"><button onclick="removeViatItem('+idx+')" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted);padding:3px 5px;border-radius:5px" onmouseover="this.style.color=var(--red)" onmouseout="this.style.color=var(--muted)">✕</button></td>'
-    +'</tr>'
-  ).join('');
+  tbody.innerHTML = viatItems.map((item, idx) => {
+    return '<tr class="viat-item-row" data-idx="'+idx+'" style="border-bottom:1px solid var(--border2)">'
+      +'<td style="padding:7px 8px;min-width:130px"><select class="vi-tipo" onchange="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;background:white">'
+      +'<option value="">Tipo…</option>'
+      +'<option value="Alimentación"'+(item.tipoGasto==='Alimentación'?' selected':'')+'>Alimentación</option>'
+      +'<option value="Transporte"'+(item.tipoGasto==='Transporte'?' selected':'')+'>Transporte</option>'
+      +'<option value="Hospedaje"'+(item.tipoGasto==='Hospedaje'?' selected':'')+'>Hospedaje</option>'
+      +'<option value="Combustible"'+(item.tipoGasto==='Combustible'?' selected':'')+'>Combustible</option>'
+      +'<option value="Peaje"'+(item.tipoGasto==='Peaje'?' selected':'')+'>Peaje</option>'
+      +'<option value="Otro"'+(item.tipoGasto==='Otro'?' selected':'')+'>Otro</option>'
+      +'</select></td>'
+      +'<td style="padding:7px 8px;min-width:160px"><input class="vi-concepto" type="text" value="'+(item.concepto||'')+'" placeholder="Descripción del gasto" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit"></td>'
+      +'<td style="padding:7px 8px;min-width:110px"><select class="vi-soporte" onchange="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;background:white">'
+      +'<option value="">—</option>'
+      +'<option value="Factura"'+(item.tipoSoporte==='Factura'?' selected':'')+'>Factura</option>'
+      +'<option value="Recibo"'+(item.tipoSoporte==='Recibo'?' selected':'')+'>Recibo</option>'
+      +'<option value="Ticket"'+(item.tipoSoporte==='Ticket'?' selected':'')+'>Ticket</option>'
+      +'<option value="Otro"'+(item.tipoSoporte==='Otro'?' selected':'')+'>Otro</option>'
+      +'</select></td>'
+      +'<td style="padding:7px 8px;min-width:90px"><input class="vi-ndoc" type="text" value="'+(item.numFactura||'')+'" placeholder="FE-0001" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit"></td>'
+      +'<td style="padding:7px 8px;text-align:center;min-width:64px"><select class="vi-edeso" onchange="onItemChange('+idx+')" style="border:1.5px solid var(--border);border-radius:6px;padding:6px;font-size:12.5px;font-family:inherit;background:white">'
+      +'<option value="si"'+(item.edeso!=='no'?' selected':'')+'>✅</option>'
+      +'<option value="no"'+(item.edeso==='no'?' selected':'')+'>❌</option>'
+      +'</select></td>'
+      +'<td style="padding:7px 8px;min-width:100px;text-align:right"><input class="vi-valor" type="number" value="'+(item.valor||'')+'" placeholder="0" min="0" oninput="onItemChange('+idx+')" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;text-align:right;font-weight:600"></td>'
+      +'<td style="padding:7px 6px;text-align:center"><button onclick="removeViatItem('+idx+')" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted);padding:3px 5px;border-radius:5px" onmouseover="this.style.color=var(--red)" onmouseout="this.style.color=var(--muted)">✕</button></td>'
+      +'</tr>';
+  }).join('');
 }
 
 function updateTopeDisplay() {
@@ -2358,16 +2633,20 @@ async function saveViatico() {
   if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando...'; }
   try {
     const batch = db.batch();
+    // El soporteBase64 (PDF del día) solo se guarda en el primer item del batch
     if (viatItems.length === 1 && viatItems[0].id) {
       const it = viatItems[0];
       batch.update(db.collection('viaticos').doc(it.id), { trabajador, fecha, municipio, zona, pernocto, estado,
         tipoGasto: it.tipoGasto, concepto: it.concepto, tipoSoporte: it.tipoSoporte,
-        numFactura: it.numFactura, edeso: it.edeso, valor: parseFloat(it.valor)||0 });
+        numFactura: it.numFactura, edeso: it.edeso, valor: parseFloat(it.valor)||0,
+        soporteBase64: viatSoporteBase64||'' });
     } else {
-      viatItems.forEach(it => {
+      viatItems.forEach((it, i) => {
         batch.set(db.collection('viaticos').doc(), { trabajador, fecha, municipio, zona, pernocto, estado,
           tipoGasto: it.tipoGasto, concepto: it.concepto, tipoSoporte: it.tipoSoporte,
-          numFactura: it.numFactura, edeso: it.edeso, valor: parseFloat(it.valor)||0 });
+          numFactura: it.numFactura, edeso: it.edeso, valor: parseFloat(it.valor)||0,
+          // Solo el primer gasto del día lleva el soporte PDF
+          soporteBase64: i === 0 ? (viatSoporteBase64||'') : '' });
       });
     }
     await batch.commit();
@@ -2401,6 +2680,216 @@ async function saveTopes() {
   };
   await db.collection('config').doc('topes_viaticos').set(data);
   closeOv('ov-topes');
+}
+
+// ═══════════════════════════════════════════════
+//  SALIDAS
+// ═══════════════════════════════════════════════
+let salidas = [];
+let unsubSalidas = null;
+let editingSalidaId = null;
+
+function canEditSalidas() {
+  return currentRole === 'admin' || currentRole === 'editor' || currentRole === 'viaticos';
+}
+
+function subscribeSalidas() {
+  if (unsubSalidas) return; // ya suscrito
+  unsubSalidas = db.collection('salidas')
+    .onSnapshot(snap => {
+      salidas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      salidas.sort((a,b) => (b.fechaSalida||'').localeCompare(a.fechaSalida||''));
+      renderSalidas();
+    }, err => console.error('salidas err:', err));
+}
+
+function semanaLabel(fechaSalida, fechaRegreso) {
+  if (!fechaSalida) return '—';
+  const d = new Date(fechaSalida + 'T00:00:00');
+  const year = d.getFullYear();
+  // Número de semana ISO
+  const jan1 = new Date(year, 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return 'Semana ' + week + ' · ' + year;
+}
+
+function calcDiasSalida() {
+  const fs = document.getElementById('s-fsalida')?.value;
+  const fr = document.getElementById('s-fregreso')?.value;
+  if (fs && fr) {
+    const diff = Math.round((new Date(fr+'T00:00:00') - new Date(fs+'T00:00:00')) / 86400000);
+    document.getElementById('s-dias').value = diff >= 0 ? diff + 1 : '';
+  } else {
+    document.getElementById('s-dias').value = '';
+  }
+}
+
+function renderSalidas() {
+  const tbody   = document.getElementById('sal-tbody');
+  const emptyEl = document.getElementById('sal-empty');
+  if (!tbody) return;
+
+  // Poblar filtro de responsables
+  const selResp = document.getElementById('sal-filter-resp');
+  const selSem  = document.getElementById('sal-filter-semana');
+  if (selResp) {
+    const cur = selResp.value;
+    const nombres = [...new Set(salidas.map(s=>s.responsable).filter(Boolean))].sort();
+    selResp.innerHTML = '<option value="">Todos los responsables</option>'
+      + nombres.map(n=>'<option value="'+n+'"'+(n===cur?' selected':'')+'>'+n+'</option>').join('');
+  }
+  if (selSem) {
+    const cur = selSem.value;
+    const semanas = [...new Set(salidas.map(s=>s.semana).filter(Boolean))].sort().reverse();
+    selSem.innerHTML = '<option value="">Todas las semanas</option>'
+      + semanas.map(s=>'<option value="'+s+'"'+(s===cur?' selected':'')+'>'+s+'</option>').join('');
+  }
+
+  const q    = (document.getElementById('sal-search')?.value||'').toLowerCase();
+  const est  = document.getElementById('sal-filter-estado')?.value||'';
+  const resp = selResp?.value||'';
+  const sem  = selSem?.value||'';
+
+  const filtered = salidas.filter(s => {
+    if (est  && s.estado !== est) return false;
+    if (resp && s.responsable !== resp) return false;
+    if (sem  && s.semana !== sem) return false;
+    if (q) {
+      const h = [s.responsable, s.municipios, s.proyectos, s.acompanantes, s.semana, s.estado].join(' ').toLowerCase();
+      if (!h.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = '';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const fmtF = d => d ? d.split('-').reverse().join('/') : '—';
+  const estadoPill = est => {
+    const map = {
+      'Programada':  { bg:'#dbeafe', color:'#1e40af', icon:'📅' },
+      'En curso':    { bg:'#dcfce7', color:'#15803d', icon:'🚗' },
+      'Finalizada':  { bg:'#f1f5f9', color:'#475569', icon:'✅' },
+      'Cancelada':   { bg:'#fee2e2', color:'#dc2626', icon:'❌' },
+    };
+    const s = map[est];
+    if (s) return '<span style="background:'+s.bg+';color:'+s.color+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">'+s.icon+' '+est+'</span>';
+    return '<span style="background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">'+( est||'—')+'</span>';
+  };
+
+  let num = 1;
+  tbody.innerHTML = filtered.map(s => {
+    const dias = s.dias || (s.fechaSalida && s.fechaRegreso
+      ? Math.round((new Date(s.fechaRegreso+'T00:00:00') - new Date(s.fechaSalida+'T00:00:00')) / 86400000) + 1
+      : '—');
+    const totalAsist = s.totalAsistentes || '—';
+    const edBtn = canEditSalidas()
+      ? '<button class="btn btn-xs btn-ghost" onclick="openModalSalida(\''+s.id+'\')">✏️</button> '
+        +'<button class="btn btn-xs btn-danger" onclick="deleteSalida(\''+s.id+'\')">🗑</button>'
+      : '—';
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--muted)">'+(num++)+'</td>'
+      +'<td style="font-size:12px;white-space:nowrap;color:var(--blue);font-weight:600">'+(s.semana||semanaLabel(s.fechaSalida))+'</td>'
+      +'<td class="td-name">'+(s.responsable||'—')+'</td>'
+      +'<td>'+fmtF(s.fechaSalida)+'</td>'
+      +'<td>'+fmtF(s.fechaRegreso)+'</td>'
+      +'<td style="text-align:center;font-weight:700">'+dias+'</td>'
+      +'<td style="font-size:12px;max-width:140px;color:var(--ink3)">'+(s.acompanantes||'—')+'</td>'
+      +'<td style="text-align:center;font-weight:700">'+totalAsist+'</td>'
+      +'<td style="font-size:12px;max-width:140px">'+(s.municipios||'—')+'</td>'
+      +'<td style="font-size:12px;max-width:160px;color:var(--ink3)">'+(s.proyectos||'—')+'</td>'
+      +'<td>'+estadoPill(s.estado)+'</td>'
+      +'<td style="white-space:nowrap">'+edBtn+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function openModalSalida(id) {
+  editingSalidaId = id || null;
+  // Poblar responsable con personal
+  const selR = document.getElementById('s-responsable');
+  const nombres = [...new Set(personal.map(p=>p.nombre).filter(Boolean))].sort();
+  selR.innerHTML = '<option value="">Seleccione...</option>'
+    + nombres.map(n=>'<option value="'+n+'">'+n+'</option>').join('');
+
+  // Defaults
+  clearFields(['s-semana','s-estado','s-acompanantes','s-municipios','s-proyectos']);
+  document.getElementById('s-fsalida').value = today();
+  document.getElementById('s-fregreso').value = '';
+  document.getElementById('s-dias').value = '';
+  document.getElementById('s-total-asist').value = '';
+
+  if (id) {
+    const s = salidas.find(x=>x.id===id);
+    if (s) {
+      selR.value = s.responsable||'';
+      setVal('s-semana', s.semana||'');
+      setVal('s-estado', s.estado||'');
+      document.getElementById('s-fsalida').value = s.fechaSalida||'';
+      document.getElementById('s-fregreso').value = s.fechaRegreso||'';
+      document.getElementById('s-dias').value = s.dias||'';
+      document.getElementById('s-total-asist').value = s.totalAsistentes||'';
+      setVal('s-acompanantes', s.acompanantes||'');
+      setVal('s-municipios', s.municipios||'');
+      setVal('s-proyectos', s.proyectos||'');
+    }
+    document.getElementById('ms-title').textContent = 'Editar Salida';
+  } else {
+    // Auto-sugerir semana actual
+    const auto = semanaLabel(today());
+    setVal('s-semana', auto);
+    calcDiasSalida();
+    document.getElementById('ms-title').textContent = 'Nueva Salida';
+  }
+  openOv('ov-salida');
+}
+
+async function saveSalida() {
+  const responsable  = val('s-responsable');
+  const fechaSalida  = document.getElementById('s-fsalida')?.value;
+  const municipios   = val('s-municipios');
+  if (!responsable || !fechaSalida || !municipios) {
+    alert('Responsable, fecha de salida y municipios son obligatorios.');
+    return;
+  }
+  calcDiasSalida();
+  const data = {
+    semana:          val('s-semana') || semanaLabel(fechaSalida),
+    responsable,
+    fechaSalida,
+    fechaRegreso:    document.getElementById('s-fregreso')?.value || '',
+    dias:            parseInt(document.getElementById('s-dias')?.value)||null,
+    acompanantes:    val('s-acompanantes'),
+    totalAsistentes: parseInt(document.getElementById('s-total-asist')?.value)||null,
+    municipios,
+    proyectos:       val('s-proyectos'),
+    estado:          val('s-estado') || 'Programada',
+  };
+  const saveBtn = document.getElementById('sal-save-btn');
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando...'; }
+  try {
+    if (editingSalidaId) {
+      await db.collection('salidas').doc(editingSalidaId).update(data);
+    } else {
+      await db.collection('salidas').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+    closeOv('ov-salida');
+  } catch(err) {
+    console.error('Error al guardar salida:', err);
+    alert('Error al guardar: ' + (err.message||err));
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent='Guardar salida'; }
+  }
+}
+
+async function deleteSalida(id) {
+  if (!canEditSalidas()) { alert('No tienes permiso.'); return; }
+  if (!confirm('¿Eliminar esta salida?')) return;
+  await db.collection('salidas').doc(id).delete();
 }
 
 // ═══════════════════════════════════════════════
