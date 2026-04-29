@@ -1388,7 +1388,9 @@ body {
 </div>
 
 
-  <div class="drawer" id="drawer-panel"></div>
+  <div class="drawer-overlay" id="drawer-ov" onclick="closeDrawer(event)">
+    <div class="drawer" id="drawer-panel"></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -2021,12 +2023,21 @@ async function saveContrato() {
     fechaInicio:fi,fechaFin:ff,valor:val('c-valor'),
     padre:val('c-padre')||null,obs:val('c-obs'),
   };
-  if (editingId) {
-    await db.collection('contratos').doc(editingId).update(data);
-  } else {
-    await db.collection('contratos').add({...data, prorrogas:[], suspensiones:[], finalizado:false, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+  const saveBtn = document.querySelector('#ov-contrato .btn-primary');
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando...'; }
+  try {
+    if (editingId) {
+      await db.collection('contratos').doc(editingId).update(data);
+    } else {
+      await db.collection('contratos').add({...data, prorrogas:[], suspensiones:[], finalizado:false, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    closeOv('ov-contrato');
+  } catch(err) {
+    console.error('Error al guardar contrato:', err);
+    alert('Error al guardar el contrato: ' + (err.message||err));
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent='Guardar contrato'; }
   }
-  closeOv('ov-contrato');
 }
 async function deleteContrato(id) {
   if (!canEdit()) { alert('No tienes permiso para eliminar.'); return; }
@@ -2047,7 +2058,7 @@ function getAllDescendants(parentId) {
 // ─── PERSONAL ───
 function openModalPersonal(editId=null) {
   if (!canEdit()) { alert('No tienes permiso para editar.'); return; }
-  editingId=editId;
+  editingId=editId; editingType='personal';
   clearFields(['p-nombre','p-cargo','p-num','p-finicio','p-ffin','p-valor','p-obs']);
   document.getElementById('p-tipo').value='Contratista';
   populateObraSelect();
@@ -2070,9 +2081,18 @@ async function savePersonal() {
   const nombre=val('p-nombre'),numero=val('p-num'),fi=val('p-finicio'),ff=val('p-ffin');
   if(!nombre||!numero||!fi||!ff){alert('Complete los campos obligatorios (*)');return;}
   const data={nombre,cargo:val('p-cargo'),numero,tipo:val('p-tipo'),fechaInicio:fi,fechaFin:ff,valor:val('p-valor'),contratoObra:val('p-obra')||null,obs:val('p-obs')};
-  if(editingId) await db.collection('personal').doc(editingId).update(data);
-  else await db.collection('personal').add({...data,prorrogas:[],createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  closeOv('ov-personal');
+  const saveBtn = document.querySelector('#ov-personal .btn-primary');
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando...'; }
+  try {
+    if(editingId) await db.collection('personal').doc(editingId).update(data);
+    else await db.collection('personal').add({...data,prorrogas:[],createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    closeOv('ov-personal');
+  } catch(err) {
+    console.error('Error al guardar personal:', err);
+    alert('Error al guardar: ' + (err.message||err));
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent='Guardar'; }
+  }
 }
 async function deletePersonal(id) {
   if (!canEdit()) { alert('No tienes permiso para eliminar.'); return; }
@@ -2096,8 +2116,17 @@ async function saveProrroga() {
   const pr={fecha,dias:val('pr-dias'),dinero:val('pr-dinero'),acto:val('pr-acto'),obs:val('pr-obs')};
   const col = prorrogaTargetType==='contrato'?'contratos':'personal';
   const ref = db.collection(col).doc(prorrogaTargetId);
-  await ref.update({ prorrogas: firebase.firestore.FieldValue.arrayUnion(pr) });
-  closeOv('ov-prorroga');
+  const saveBtn = document.querySelector('#ov-prorroga .btn-primary');
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='Guardando...'; }
+  try {
+    await ref.update({ prorrogas: firebase.firestore.FieldValue.arrayUnion(pr) });
+    closeOv('ov-prorroga');
+  } catch(err) {
+    console.error('Error al guardar prórroga:', err);
+    alert('Error al guardar la prórroga: ' + (err.message||err));
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent='Guardar prórroga'; }
+  }
 }
 async function deleteProrroga(id, type, idx) {
   if(!confirm('¿Eliminar esta prórroga?')) return;
@@ -2143,28 +2172,36 @@ async function saveSuspension() {
   const item = contratos.find(c=>c.id===suspTargetId);
   if (!item) return;
 
-  if (isReinstate) {
-    const fechaReinicio = val('susp-fecha-reinicio');
-    if (!fechaReinicio) { alert('La fecha de reinicio es obligatoria.'); return; }
-    // Update the last suspension entry with reinicio date, or add a reinicio entry
-    const suspensiones = [...(item.suspensiones||[])];
-    const lastIdx = suspensiones.length - 1;
-    if (lastIdx >= 0 && suspensiones[lastIdx].tipo === 'suspension') {
-      suspensiones[lastIdx].fechaReinicio = fechaReinicio;
-      suspensiones[lastIdx].obsReinicio   = motivo;
+  const saveBtn = document.getElementById('susp-save-btn');
+  if (saveBtn) { saveBtn.disabled=true; }
+  try {
+    if (isReinstate) {
+      const fechaReinicio = val('susp-fecha-reinicio');
+      if (!fechaReinicio) { alert('La fecha de reinicio es obligatoria.'); return; }
+      const suspensiones = [...(item.suspensiones||[])];
+      const lastIdx = suspensiones.length - 1;
+      if (lastIdx >= 0 && suspensiones[lastIdx].tipo === 'suspension') {
+        suspensiones[lastIdx].fechaReinicio = fechaReinicio;
+        suspensiones[lastIdx].obsReinicio   = motivo;
+      } else {
+        suspensiones.push({ tipo:'reinicio', fechaReinicio, obs:motivo, acto:val('susp-acto') });
+      }
+      await db.collection(col).doc(suspTargetId).update({ suspensiones });
     } else {
-      suspensiones.push({ tipo:'reinicio', fechaReinicio, obs:motivo, acto:val('susp-acto') });
+      const fechaSuspension = val('susp-fecha-inicio');
+      if (!fechaSuspension) { alert('La fecha de suspensión es obligatoria.'); return; }
+      const entry = { tipo:'suspension', fechaSuspension, obs:motivo, acto:val('susp-acto') };
+      await db.collection(col).doc(suspTargetId).update({
+        suspensiones: firebase.firestore.FieldValue.arrayUnion(entry)
+      });
     }
-    await db.collection(col).doc(suspTargetId).update({ suspensiones });
-  } else {
-    const fechaSuspension = val('susp-fecha-inicio');
-    if (!fechaSuspension) { alert('La fecha de suspensión es obligatoria.'); return; }
-    const entry = { tipo:'suspension', fechaSuspension, obs:motivo, acto:val('susp-acto') };
-    await db.collection(col).doc(suspTargetId).update({
-      suspensiones: firebase.firestore.FieldValue.arrayUnion(entry)
-    });
+    closeOv('ov-suspension');
+  } catch(err) {
+    console.error('Error al guardar suspensión:', err);
+    alert('Error al guardar: ' + (err.message||err));
+  } finally {
+    if (saveBtn) { saveBtn.disabled=false; }
   }
-  closeOv('ov-suspension');
 }
 
 async function deleteSuspension(id, type, idx) {
